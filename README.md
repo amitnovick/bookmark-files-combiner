@@ -1,14 +1,22 @@
 # bookmark-files-combiner
 
-A Clojure library designed to ... well, that part is up to you.
+A script that takes PDFs, bookmark metadata files in YAML corresponding to these PDFs and an output directory
+It will then combine the PDFs, and apply the bookmark metadata to it
 
 ## Usage
 
-FIXME
+```bash
+$ bb src/bookmark_files_combiner/core.clj /path/to/pdf-files/ /path/to/bookmark-files/ /path/to/output-boomark-file/
+```
+
+## Requirements
+
+- PDFTK (tested on my Ubuntu 22.04 LTS system with the pdftk port to java, version 3.2.2)
+- Babashka (tested with v1.3.176)
 
 ## License
 
-Copyright © 2023 FIXME
+Copyright © 2023 Amit Novick
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
