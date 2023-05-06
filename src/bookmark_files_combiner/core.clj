@@ -127,17 +127,21 @@
                    )),
        "cat",
        "output",
-       (apply str [resources-dir-path, "/combined.pdf"]),
+       (apply str [output-bookmark-dir-path, "/combined.pdf"]),
        ]))
 
 (shell (str/join " " ["pdftk",
-                      (apply str [resources-dir-path, "/combined.pdf"]),
+                      (apply str [output-bookmark-dir-path, "/combined.pdf"]),
                       "update_info",
                       (apply str [output-bookmark-dir-path,"/bookmarks.txt"]),
                       "output",
-                      (apply str [resources-dir-path, "/combined-bookmarked.pdf"]),
-                      "verbose"]
+                      (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"]),
+                      ]
                  ))
+
+(let [temp-file (doto (fs/create-temp-file)
+                  (fs/delete-on-exit))]
+  temp-file)
 
 
 
