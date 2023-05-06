@@ -109,13 +109,6 @@
 
 (def updated-bookmarks (update-bookmarks bookmarks))
 
-(write-bookmarks updated-bookmarks (
-                                     apply str [
-                                                output-bookmark-dir-path,
-                                                "/bookmarks.txt"
-                                                ]
-                                           ))
-
 (defn merge-pdfs [output-combined-pdf-path]
   (shell (str/join " " ["pdftk",
                         (str/join " "
@@ -131,8 +124,6 @@
                         ]))
   )
 
-(merge-pdfs (apply str [output-bookmark-dir-path, "/combined.pdf"]))
-
 (defn add-bookmarks-to-merged-pdf [output-bookmark-txt-path,
                                    output-combined-pdf-path,
                                    output-bookmarked-pdf-path]
@@ -147,17 +138,19 @@
   )
 
 
-(add-bookmarks-to-merged-pdf
-  (apply str [output-bookmark-dir-path,"/bookmarks.txt"])
-  (apply str [output-bookmark-dir-path, "/combined.pdf"])
-  (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"])
-  )
 
 (let [temp-bookmark-txt-path (doto (fs/create-temp-file)
                   (fs/delete-on-exit))
       temp-combined-pdf-path (doto (fs/create-temp-file)
                                (fs/delete-on-exit))]
-  (pprint (str temp-bookmark-txt-path)))
+  (write-bookmarks updated-bookmarks (str temp-bookmark-txt-path))
+  (merge-pdfs (str temp-combined-pdf-path))
+  (add-bookmarks-to-merged-pdf
+    (str temp-bookmark-txt-path)
+    (str temp-combined-pdf-path)
+    (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"])
+    )
+  )
 
 
 
