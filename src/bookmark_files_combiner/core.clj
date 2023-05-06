@@ -6,19 +6,8 @@
             [clojure.pprint :refer [pprint]],
             [clojure.string :as str]))
 
-(def resources-dir-path "/home/amit/Dropbox/dev/clojure/bookmark-files-combiner/resources")
 
-(def bookmark-yaml-files-path (apply str [resources-dir-path, "/bookmark-files"]))
-
-(def pdf-files-path (apply str [resources-dir-path, "/pdf-files"]))
-
-(def output-bookmark-dir-path (apply str [resources-dir-path, "/output-boomark-file"]))
-
-(def yaml-files (sort (fs/list-dir bookmark-yaml-files-path)))
-
-(def pdf-files (sort (fs/list-dir pdf-files-path)))
-
-(defn get-bookmarks []
+(defn get-bookmarks [yaml-files]
   (reduce
     (fn [acc, file]
       (with-open [reader (io/reader (io/file (fs/file file)))]
@@ -33,7 +22,7 @@
 (defn parse-int [s]
   (Integer/parseInt (re-find #"\A-?\d+" s)))
 
-(defn get-pdf-files-sizes []
+(defn get-pdf-files-sizes [pdf-files]
   (reduce
     (fn [acc, file]
       (conj acc
@@ -65,11 +54,9 @@
     )
   )
 
-(def pdf-files-sizes (get-pdf-files-sizes))
 
-(def bookmarks (get-bookmarks))
 
-(defn update-bookmarks [bookmarks]
+(defn update-bookmarks [bookmarks, pdf-files-sizes]
   (cond
     (< (count bookmarks) 2) bookmarks
     :else (conj (map-indexed
@@ -107,9 +94,7 @@
     )
   )
 
-(def updated-bookmarks (update-bookmarks bookmarks))
-
-(defn merge-pdfs [output-combined-pdf-path]
+(defn merge-pdfs [output-combined-pdf-path pdf-files]
   (shell (str/join " " ["pdftk",
                         (str/join " "
                                   (map
@@ -139,18 +124,35 @@
 
 
 
-(let [temp-bookmark-txt-path (doto (fs/create-temp-file)
+(let [[pdfs-dir-path-string
+       bookmarks-yaml-files-dir-path-strings
+       output-pdf-dir-path-string
+       ] *command-line-args*
+      temp-bookmark-txt-path (doto (fs/create-temp-file)
                   (fs/delete-on-exit))
       temp-combined-pdf-path (doto (fs/create-temp-file)
                                (fs/delete-on-exit))]
+  (def pdfs-dir-path (fs/absolutize(fs/path pdfs-dir-path-string)))
+  (def bookmarks-yaml-files-dir-path (fs/absolutize(fs/path bookmarks-yaml-files-dir-path-strings)))
+  (def output-pdf-dir-path (fs/absolutize(fs/path output-pdf-dir-path-string)))
+  (def bookmark-yaml-files-path (str bookmarks-yaml-files-dir-path))
+  (def yaml-files (sort (fs/list-dir bookmark-yaml-files-path)))
+  (def bookmarks (get-bookmarks yaml-files))
+  (def pdf-files-path (str pdfs-dir-path))
+  (def pdf-files (sort (fs/list-dir pdf-files-path)))
+  (def pdf-files-sizes (get-pdf-files-sizes pdf-files))
+  (def updated-bookmarks (update-bookmarks bookmarks pdf-files-sizes))
+
   (write-bookmarks updated-bookmarks (str temp-bookmark-txt-path))
-  (merge-pdfs (str temp-combined-pdf-path))
+  (merge-pdfs (str temp-combined-pdf-path) pdf-files)
   (add-bookmarks-to-merged-pdf
     (str temp-bookmark-txt-path)
     (str temp-combined-pdf-path)
-    (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"])
+    (apply str [output-pdf-dir-path, "/combined-bookmarked.pdf"])
     )
   )
+
+
 
 
 
