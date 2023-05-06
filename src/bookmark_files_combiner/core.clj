@@ -6,7 +6,6 @@
             [clojure.pprint :refer [pprint]],
             [clojure.string :as str]))
 
-
 (defn get-bookmarks [yaml-files]
   (reduce
     (fn [acc, file]
@@ -53,8 +52,6 @@
     pdf-files
     )
   )
-
-
 
 (defn update-bookmarks [bookmarks, pdf-files-sizes]
   (cond
@@ -122,8 +119,6 @@
                    ))
   )
 
-
-
 (let [[pdfs-dir-path-string
        bookmarks-yaml-files-dir-path-strings
        output-pdf-dir-path-string
@@ -151,8 +146,3 @@
     (apply str [output-pdf-dir-path, "/combined-bookmarked.pdf"])
     )
   )
-
-
-
-
-
