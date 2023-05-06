@@ -67,13 +67,12 @@
 
 (def pdf-files-sizes (get-pdf-files-sizes))
 
-(def bookmarks (get-bookmarks))   ; map
+(def bookmarks (get-bookmarks))
 
 (defn update-bookmarks [bookmarks]
   (cond
     (< (count bookmarks) 2) bookmarks
     :else (conj (map-indexed
-
                   (fn [index, file]
                     (map
                       (fn [bookmark-in-file]
@@ -93,14 +92,9 @@
     )
   )
 
-(defn write-bookmarks [bookmarks]
+(defn write-bookmarks [bookmarks output-bookmark-txt-path]
   (with-open [writer (
-                       io/writer (
-                                   apply str [
-                                              output-bookmark-dir-path,
-                                              "/bookmarks.txt"
-                                              ]
-                                         ) :append false)]
+                       io/writer output-bookmark-txt-path :append false)]
     (doseq [file-bookmarks bookmarks]
       (doseq [bookmark file-bookmarks]
         (.write writer (str "BookmarkBegin" "\n"))
@@ -115,33 +109,55 @@
 
 (def updated-bookmarks (update-bookmarks bookmarks))
 
-(write-bookmarks updated-bookmarks)
+(write-bookmarks updated-bookmarks (
+                                     apply str [
+                                                output-bookmark-dir-path,
+                                                "/bookmarks.txt"
+                                                ]
+                                           ))
 
-(shell (str/join " " ["pdftk",
-       (str/join " "
-                 (map
-                   (fn [pdf-file-path]
-                     (str pdf-file-path)
-                     )
-                   pdf-files
-                   )),
-       "cat",
-       "output",
-       (apply str [output-bookmark-dir-path, "/combined.pdf"]),
-       ]))
+(defn merge-pdfs [output-combined-pdf-path]
+  (shell (str/join " " ["pdftk",
+                        (str/join " "
+                                  (map
+                                    (fn [pdf-file-path]
+                                      (str pdf-file-path)
+                                      )
+                                    pdf-files
+                                    )),
+                        "cat",
+                        "output",
+                        output-combined-pdf-path
+                        ]))
+  )
 
-(shell (str/join " " ["pdftk",
-                      (apply str [output-bookmark-dir-path, "/combined.pdf"]),
-                      "update_info",
-                      (apply str [output-bookmark-dir-path,"/bookmarks.txt"]),
-                      "output",
-                      (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"]),
-                      ]
-                 ))
+(merge-pdfs (apply str [output-bookmark-dir-path, "/combined.pdf"]))
 
-(let [temp-file (doto (fs/create-temp-file)
-                  (fs/delete-on-exit))]
-  temp-file)
+(defn add-bookmarks-to-merged-pdf [output-bookmark-txt-path,
+                                   output-combined-pdf-path,
+                                   output-bookmarked-pdf-path]
+  (shell (str/join " " ["pdftk",
+                        output-combined-pdf-path,
+                        "update_info",
+                        output-bookmark-txt-path,
+                        "output",
+                        output-bookmarked-pdf-path
+                        ]
+                   ))
+  )
+
+
+(add-bookmarks-to-merged-pdf
+  (apply str [output-bookmark-dir-path,"/bookmarks.txt"])
+  (apply str [output-bookmark-dir-path, "/combined.pdf"])
+  (apply str [output-bookmark-dir-path, "/combined-bookmarked.pdf"])
+  )
+
+(let [temp-bookmark-txt-path (doto (fs/create-temp-file)
+                  (fs/delete-on-exit))
+      temp-combined-pdf-path (doto (fs/create-temp-file)
+                               (fs/delete-on-exit))]
+  (pprint (str temp-bookmark-txt-path)))
 
 
 
