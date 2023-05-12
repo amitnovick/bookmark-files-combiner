@@ -34,7 +34,7 @@
                       (str/split
                         (:out (shell {:out :string}
                                      "pdftk",
-                                     (str "'" file "'"),
+                                     (str file),
                                      "dump_data"
                                      )
                           )
