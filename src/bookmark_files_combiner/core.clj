@@ -34,7 +34,7 @@
                       (str/split
                         (:out (shell {:out :string}
                                      "pdftk",
-                                     (str file),
+                                     file,
                                      "dump_data"
                                      )
                           )
@@ -92,18 +92,12 @@
   )
 
 (defn merge-pdfs [output-combined-pdf-path pdf-files]
-  (shell (str/join " " ["pdftk",
-                        (str/join " "
-                                  (map
-                                    (fn [pdf-file-path]
-                                      (str "'" pdf-file-path "'")
-                                      )
-                                    pdf-files
-                                    )),
-                        "cat",
-                        "output",
-                        output-combined-pdf-path
-                        ]))
+  (apply shell "pdftk"
+         (concat
+           (map str pdf-files)
+           ["cat" "output" output-combined-pdf-path]
+           )
+         )
   )
 
 (defn add-bookmarks-to-merged-pdf [output-bookmark-txt-path,
@@ -124,12 +118,12 @@
        output-pdf-dir-path-string
        ] *command-line-args*
       temp-bookmark-txt-path (doto (fs/create-temp-file)
-                  (fs/delete-on-exit))
+                               (fs/delete-on-exit))
       temp-combined-pdf-path (doto (fs/create-temp-file)
                                (fs/delete-on-exit))]
-  (def pdfs-dir-path (fs/absolutize(fs/path pdfs-dir-path-string)))
-  (def bookmarks-yaml-files-dir-path (fs/absolutize(fs/path bookmarks-yaml-files-dir-path-strings)))
-  (def output-pdf-dir-path (fs/absolutize(fs/path output-pdf-dir-path-string)))
+  (def pdfs-dir-path (fs/absolutize (fs/path pdfs-dir-path-string)))
+  (def bookmarks-yaml-files-dir-path (fs/absolutize (fs/path bookmarks-yaml-files-dir-path-strings)))
+  (def output-pdf-dir-path (fs/absolutize (fs/path output-pdf-dir-path-string)))
   (def bookmark-yaml-files-path (str bookmarks-yaml-files-dir-path))
   (def yaml-files (sort (fs/list-dir bookmark-yaml-files-path)))
   (def bookmarks (get-bookmarks yaml-files))
