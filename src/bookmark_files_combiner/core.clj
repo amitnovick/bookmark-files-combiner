@@ -34,7 +34,7 @@
                       (str/split
                         (:out (shell {:out :string}
                                      "pdftk",
-                                     (str file),
+                                     (str "'" file "'"),
                                      "dump_data"
                                      )
                           )
@@ -96,7 +96,7 @@
                         (str/join " "
                                   (map
                                     (fn [pdf-file-path]
-                                      (str pdf-file-path)
+                                      (str "'" pdf-file-path "'")
                                       )
                                     pdf-files
                                     )),
